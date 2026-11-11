@@ -1,16 +1,24 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Archive, Banknote, HandHeart, Mail, MapPin, Phone, Receipt, Star } from "lucide-react";
+import { Archive, Mail, MapPin, Phone, Star } from "lucide-react";
 
 import { ChildActions } from "@/features/children/components/child-actions";
-import { ageOf } from "@/features/children/components/child-avatar";
-import { ChildPhotoEditor } from "@/features/children/components/child-photo-editor";
+import { ageOf } from "@/features/children/age";
+import { removeChildPhotoAction, uploadChildPhotoAction } from "@/features/children/actions";
+import { PhotoEditor } from "@/components/shared/photo-editor";
 import { SchoolingPanel } from "@/features/children/components/schooling-panel";
 import { getChildDetail, getSchoolOptions, getYearOptions, type ChildDetail } from "@/features/children/queries";
 import { GUARDIAN_RELATIONSHIP_LABELS, SEX_LABELS } from "@/features/children/types";
+import { SponsorshipList } from "@/features/sponsorships/components/sponsorship-list";
+import { CommitmentsSituation } from "@/features/commitments/components/commitments-situation";
+import { listCommitments } from "@/features/commitments/queries";
+import { ChildContributions } from "@/features/contributions/components/child-contributions";
+import { ChildExpenses } from "@/features/expenses/components/child-expenses";
+import { listChildExpenses } from "@/features/expenses/queries";
+import { listChildContributions } from "@/features/contributions/queries";
+import { listSponsorshipsOf } from "@/features/sponsorships/queries";
 import { AccessDenied } from "@/components/shared/access-denied";
 import { PageContainer } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/states";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { UrlTabs } from "@/components/shared/url-tabs";
 import { hasPermission } from "@/lib/auth/permissions";
@@ -25,7 +33,17 @@ export default async function ChildPage({ params }: PageProps<"/enfants/[id]">) 
   if (!auth.ok) return <AccessDenied />;
 
   const { id } = await params;
-  const [child, years, schools] = await Promise.all([getChildDetail(id), getYearOptions(), getSchoolOptions()]);
+  const [child, years, schools, sponsorships] = await Promise.all([
+    getChildDetail(id),
+    getYearOptions(),
+    getSchoolOptions(),
+    listSponsorshipsOf({ childId: id }),
+  ]);
+  const canSeeCommitments = hasPermission(auth.user.role, "commitments:read");
+  const [commitments, contributions] = canSeeCommitments
+    ? await Promise.all([listCommitments({ childId: id, includeCancelled: true }), hasPermission(auth.user.role, "payments:read") ? listChildContributions(id) : Promise.resolve([])])
+    : [[], []];
+  const expenses = hasPermission(auth.user.role, "expenses:read") ? await listChildExpenses(id) : null;
   if (!child) notFound();
 
   const role = auth.user.role;
@@ -47,7 +65,7 @@ export default async function ChildPage({ params }: PageProps<"/enfants/[id]">) 
       ) : null}
 
       <header className="flex flex-col gap-5 rounded-xl border bg-card p-5 shadow-card sm:flex-row sm:items-center md:p-6">
-        <ChildPhotoEditor childId={child.id} name={name} photoUrl={child.photoLargeUrl} canEdit={canWrite} />
+        <PhotoEditor entityId={child.id} name={name} photoUrl={child.photoLargeUrl} canEdit={canWrite} upload={uploadChildPhotoAction} remove={removeChildPhotoAction} />
         <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:flex-wrap">
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{name}</h1>
@@ -90,37 +108,36 @@ export default async function ChildPage({ params }: PageProps<"/enfants/[id]">) 
           {
             value: "parrainages",
             label: "Sponsors",
-            count: child.sponsorshipsCount,
+            count: sponsorships.length,
             content: (
-              <UpcomingPanel
-                icon={HandHeart}
-                title="Sponsors et parrainages"
-                description="Les sponsors de l'enfant et leurs parrainages, année par année, apparaîtront ici avec le module Parrainages."
+              <SponsorshipList
+                items={sponsorships}
+                perspective="sponsors"
+                years={years}
+                fixed={{ id: child.id, label: name, description: child.code }}
+                canWrite={hasPermission(role, "sponsorships:write")}
+                canSeeFinance={hasPermission(role, "commitments:read")}
+                canManageCommitment={hasPermission(role, "commitments:write")}
+                createDisabledReason={archived ? "La fiche est archivée." : null}
               />
             ),
           },
-          {
-            value: "contributions",
-            label: "Contributions",
-            content: (
-              <UpcomingPanel
-                icon={Banknote}
-                title="Contributions"
-                description="Les versements affectés aux engagements de l'enfant apparaîtront ici avec le module Contributions."
-              />
-            ),
-          },
-          {
-            value: "depenses",
-            label: "Dépenses",
-            content: (
-              <UpcomingPanel
-                icon={Receipt}
-                title="Dépenses scolaires"
-                description="Les dépenses individuelles et la part de l'enfant dans les dépenses collectives apparaîtront ici avec le module Dépenses."
-              />
-            ),
-          },
+          ...(canSeeCommitments
+            ? [
+                {
+                  value: "contributions",
+                  label: "Contributions",
+                  count: contributions.length,
+                  content: (
+                    <div className="space-y-4">
+                      <CommitmentsSituation items={commitments} perspective="sponsor" />
+                      <ChildContributions rows={contributions} />
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+          ...(expenses ? [{ value: "depenses", label: "Dépenses", count: expenses.length, content: <ChildExpenses rows={expenses} /> }] : []),
           ...(hasPermission(role, "audit:read")
             ? [{ value: "historique", label: "Historique", content: <HistoryPanel history={child.history} /> }]
             : []),
@@ -212,14 +229,6 @@ function ContactLine({ icon: Icon, value, href }: { icon: typeof Phone; value: s
         <span>{value}</span>
       )}
     </li>
-  );
-}
-
-function UpcomingPanel({ icon, title, description }: { icon: typeof Phone; title: string; description: string }) {
-  return (
-    <div className="rounded-xl border bg-card shadow-card">
-      <EmptyState icon={icon} title={title} description={description} />
-    </div>
   );
 }
 

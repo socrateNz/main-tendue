@@ -53,6 +53,8 @@ const paymentSchema = new Schema(
     attachments: { type: [assetSchema], default: [] },
     status: { type: String, enum: MOVEMENT_STATUSES, required: true, default: "VALID" },
     cancellation: { type: cancellationSchema, default: null },
+    /** Incrémenté à chaque affectation de son avance (même principe que Commitment.allocationVersion). */
+    creditVersion: { type: Number, required: true, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true, collection: "payments" },

@@ -39,6 +39,12 @@ const commitmentSchema = new Schema(
     cancelledBy: { type: Schema.Types.ObjectId, ref: "User" },
     cancelReason: { type: String, maxlength: 500 },
     notes: { type: String, maxlength: 2000 },
+    /**
+     * Incrémenté à chaque affectation (versement ou avance), dans la transaction qui l'écrit :
+     * deux affectations simultanées sur le même engagement entrent en conflit d'écriture et l'une
+     * est rejouée avec les montants à jour — le plafond « affecté ≤ attendu » ne peut pas être dépassé.
+     */
+    allocationVersion: { type: Number, required: true, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true, collection: "commitments" },

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { ChildListItem } from "@/features/children/queries";
-import { ChildAvatar, ageOf } from "@/features/children/components/child-avatar";
+import { PersonAvatar } from "@/components/shared/person-avatar";
+import { ageOf } from "@/features/children/age";
 import { SEX_LABELS } from "@/features/children/types";
 import { DataTable, ListFilter, ListSearch, type DataTablePagination } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/states";
@@ -44,7 +45,7 @@ export function ChildrenTable({
         const child = info.row.original;
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <ChildAvatar name={info.getValue()} photoUrl={child.photoUrl} />
+            <PersonAvatar name={info.getValue()} photoUrl={child.photoUrl} />
             <div className="min-w-0">
               <Link href={`/enfants/${child.id}`} className="block truncate font-medium hover:text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
                 {info.getValue()}
@@ -152,7 +153,7 @@ export function ChildrenTable({
         }
         renderMobileItem={(child) => (
           <Link href={`/enfants/${child.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-muted/50">
-            <ChildAvatar name={fullName(child)} photoUrl={child.photoUrl} size={40} />
+            <PersonAvatar name={fullName(child)} photoUrl={child.photoUrl} size={40} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{fullName(child)}</p>
               <p className="truncate text-xs text-muted-foreground">

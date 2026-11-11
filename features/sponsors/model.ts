@@ -3,9 +3,9 @@ import "server-only";
 import { Schema, type InferSchemaType } from "mongoose";
 
 import { assetSchema, registerModel } from "@/lib/db/schema-helpers";
-import { buildSearchText } from "@/lib/text";
+import { buildSearchText, normalizeSearch } from "@/lib/text";
 
-import { COUNTRY_CODE_PATTERN, SPONSOR_KINDS, SPONSOR_STATUSES } from "./types";
+import { COUNTRY_CODE_PATTERN, SPONSOR_KINDS, SPONSOR_STATUSES, sponsorDisplayName } from "./types";
 
 const addressSchema = new Schema(
   {
@@ -34,6 +34,10 @@ const sponsorSchema = new Schema(
     notes: { type: String, maxlength: 5000 },
     status: { type: String, enum: SPONSOR_STATUSES, required: true, default: "ACTIVE" },
     statusChangedAt: { type: Date },
+    statusReason: { type: String, maxlength: 500 },
+    /** Nom affiché (« Prénom NOM » ou raison sociale) et clé de tri normalisée, calculés. */
+    displayName: { type: String, required: true },
+    sortName: { type: String, required: true },
     searchText: { type: String, required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
@@ -41,7 +45,7 @@ const sponsorSchema = new Schema(
 );
 
 sponsorSchema.index({ code: 1 }, { unique: true });
-sponsorSchema.index({ status: 1, lastName: 1 });
+sponsorSchema.index({ status: 1, sortName: 1 });
 sponsorSchema.index({ searchText: 1 });
 sponsorSchema.index({ email: 1 }, { sparse: true });
 sponsorSchema.index({ "address.country": 1 });
@@ -53,6 +57,8 @@ sponsorSchema.pre("validate", function () {
   if (this.kind === "ORGANIZATION" && !this.organizationName) {
     this.invalidate("organizationName", "Le nom de l'organisation est obligatoire.");
   }
+  this.displayName = sponsorDisplayName(this);
+  this.sortName = normalizeSearch(this.kind === "ORGANIZATION" ? (this.organizationName ?? "") : `${this.lastName ?? ""} ${this.firstName ?? ""}`);
   this.searchText = buildSearchText([this.code, this.firstName, this.lastName, this.organizationName, this.email, this.phone]);
 });
 

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GraduationCap } from "lucide-react";
 
 import {
   Sidebar,
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { Permission } from "@/lib/auth/permissions";
 import { NAVIGATION } from "@/lib/navigation";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export function AppSidebar({ permissions, footer }: { permissions: readonly Permission[]; footer?: React.ReactNode }) {
   const pathname = usePathname();
@@ -37,16 +37,14 @@ export function AppSidebar({ permissions, footer }: { permissions: readonly Perm
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              tooltip="Parrainage scolaire"
+              tooltip="Main Tendue"
               render={<Link href="/tableau-de-bord" />}
               className="hover:bg-transparent active:bg-transparent"
             >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <GraduationCap className="size-4" aria-hidden />
-              </span>
+              <BrandLogo size={32} />
               <span className="flex min-w-0 flex-col leading-tight">
-                <span className="truncate text-sm font-semibold text-foreground">Parrainage scolaire</span>
-                <span className="truncate text-xs text-muted-foreground">Espace de gestion</span>
+                <span className="truncate text-sm font-semibold text-foreground">Main Tendue</span>
+                <span className="truncate text-xs text-muted-foreground">Parrainage scolaire</span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

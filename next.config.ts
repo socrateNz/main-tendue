@@ -8,7 +8,30 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   ...(process.env.NODE_ENV === "production"
-    ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
+    ? [
+        { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        {
+          // Sources limitées à l'application et à Cloudinary (images signées, lecture vidéo via
+          // URL privée expirante, envoi direct des vidéos). 'unsafe-inline' reste nécessaire aux
+          // scripts d'hydratation du rendu partiellement pré-calculé (pas de nonce possible sur la
+          // coquille statique).
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https://res.cloudinary.com",
+            "media-src 'self' https://res.cloudinary.com https://api.cloudinary.com",
+            "connect-src 'self' https://api.cloudinary.com",
+            "font-src 'self' data:",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "upgrade-insecure-requests",
+          ].join("; "),
+        },
+      ]
     : []),
 ];
 

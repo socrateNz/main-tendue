@@ -13,7 +13,8 @@ export const DEFAULT_VIDEO_RETENTION_DAYS = 90;
 
 /** Formats et taille acceptés à l'import. */
 export const VIDEO_ALLOWED_FORMATS = ["mp4", "mov", "webm", "m4v"] as const;
-export const VIDEO_MAX_BYTES = 500 * 1024 * 1024;
+/** 100 Mo : limite par vidéo de l'offre gratuite Cloudinary (à relever selon l'abonnement). */
+export const VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 
 /** Durée de validité d'une URL Cloudinary signée délivrée après vérification d'un lien. */
 export const SIGNED_URL_TTL_SECONDS = 10 * 60;

@@ -320,3 +320,14 @@ lastAttemptAt, lastError, deletedAt }`.
 | Journal d'audit | ✔ | ✔ | | | |
 
 La matrice fait foi dans `lib/auth/permissions.ts` ; chaque service vérifie la permission côté serveur.
+
+---
+
+## 12. Écritures concurrentes
+
+Chaque affectation (ligne de versement, affectation d'avance) et chaque modification d'engagement
+incrémente, **dans la même transaction**, un compteur de version : `commitments.allocationVersion`
+(plafond « affecté ≤ attendu ») et `payments.creditVersion` (plafond du crédit d'avance). Deux écritures
+simultanées sur le même engagement ou la même avance entrent en conflit d'écriture : MongoDB en rejette
+une, qui est rejouée avec les montants à jour, puis refusée si le plafond est atteint. Ce comportement
+est couvert par un test d'intégration (deux versements simultanés : un seul passe).

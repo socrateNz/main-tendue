@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Parrainage scolaire",
-    template: "%s · Parrainage scolaire",
+    default: "Main Tendue",
+    template: "%s · Main Tendue",
   },
   description: "Gestion du programme de parrainage scolaire : enfants, sponsors, engagements, contributions et dépenses.",
   robots: { index: false, follow: false },

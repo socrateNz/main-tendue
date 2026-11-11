@@ -155,3 +155,27 @@
     font-feature-settings: "cv11", "ss01";
   }
 }
+
+/* Impression des rapports (« Enregistrer en PDF ») : seul le contenu utile est imprimé. */
+@media print {
+  [data-slot="sidebar"],
+  [data-slot="sidebar-gap"],
+  header,
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  body,
+  [data-slot="sidebar-inset"] {
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .report-print {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .report-print table {
+    min-width: 0 !important;
+    font-size: 10pt;
+  }
+}

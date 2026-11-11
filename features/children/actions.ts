@@ -97,7 +97,7 @@ export async function unarchiveChildAction(childId: unknown): Promise<ActionResu
 export async function uploadChildPhotoAction(formData: FormData): Promise<ActionResult> {
   try {
     const actor = await requirePermission("children:write");
-    const childId = objectIdSchema.safeParse(formData.get("childId"));
+    const childId = objectIdSchema.safeParse(formData.get("id"));
     const file = formData.get("photo");
     if (!childId.success) return { ok: false, code: "VALIDATION", message: "Identifiant invalide." };
     if (!(file instanceof File)) return { ok: false, code: "VALIDATION", message: "Aucun fichier reçu." };

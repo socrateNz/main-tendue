@@ -11,7 +11,7 @@ export default async function NewChildPage() {
   const auth = await authorizePage("children:write");
   if (!auth.ok) return <AccessDenied />;
   return (
-    <PageContainer className="max-w-5xl">
+    <PageContainer>
       <PageHeader title="Nouvel enfant" description="La photo et la scolarité pourront être ajoutées depuis la fiche, une fois créée." />
       <ChildForm />
     </PageContainer>

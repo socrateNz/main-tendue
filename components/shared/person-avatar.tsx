@@ -3,8 +3,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/text";
 
-/** Photo de l'enfant (URL signée) ou initiales. */
-export function ChildAvatar({
+/** Photo d'une personne (URL signée) ou ses initiales. */
+export function PersonAvatar({
   name,
   photoUrl,
   size = 36,
@@ -23,15 +23,4 @@ export function ChildAvatar({
       {photoUrl ? <Image src={photoUrl} alt="" fill sizes={`${size}px`} className="object-cover" /> : initials(name)}
     </span>
   );
-}
-
-/** Âge en années révolues à la date du jour. */
-export function ageOf(birthDate: string): number {
-  const birth = new Date(birthDate);
-  const now = new Date();
-  let age = now.getUTCFullYear() - birth.getUTCFullYear();
-  const beforeBirthday =
-    now.getUTCMonth() < birth.getUTCMonth() || (now.getUTCMonth() === birth.getUTCMonth() && now.getUTCDate() < birth.getUTCDate());
-  if (beforeBirthday) age -= 1;
-  return age;
 }

@@ -20,7 +20,7 @@ export default async function EditChildPage({ params }: PageProps<"/enfants/[id]
   if (child.status === "ARCHIVED") return <AccessDenied />;
 
   return (
-    <PageContainer className="max-w-5xl">
+    <PageContainer>
       <PageHeader title={`Modifier — ${fullName(child)}`} description={`Fiche ${child.code}`} />
       <ChildForm
         childId={child.id}

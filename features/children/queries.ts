@@ -8,7 +8,7 @@ import { SchoolYear } from "@/features/school-years/model";
 import { Sponsorship } from "@/features/sponsorships/model";
 import { signedImageUrl, type StoredAsset } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db/mongoose";
-import { escapeRegex, toPaginated, type ListParams, type Paginated } from "@/lib/db/pagination";
+import { searchFilter, toPaginated, type ListParams, type Paginated } from "@/lib/db/pagination";
 import { normalizeSearch } from "@/lib/text";
 
 import type {
@@ -21,13 +21,20 @@ import type {
 
 /* ------------------------------------------------------------------ Options des formulaires */
 
-export type YearOption = { id: string; label: string; status: string; current: boolean };
+export type YearOption = { id: string; label: string; status: string; current: boolean; startDate: string; endDate: string };
 export type SchoolOption = { id: string; name: string; city: string | null; active: boolean };
 
 export async function getYearOptions(): Promise<YearOption[]> {
   await connectDB();
-  const years = await SchoolYear.find({ archived: false }, { label: 1, status: 1 }).sort({ startDate: -1 }).lean();
-  return years.map((year) => ({ id: year._id.toString(), label: year.label, status: year.status, current: year.status === "ACTIVE" }));
+  const years = await SchoolYear.find({ archived: false }, { label: 1, status: 1, startDate: 1, endDate: 1 }).sort({ startDate: -1 }).lean();
+  return years.map((year) => ({
+    id: year._id.toString(),
+    label: year.label,
+    status: year.status,
+    current: year.status === "ACTIVE",
+    startDate: year.startDate.toISOString(),
+    endDate: year.endDate.toISOString(),
+  }));
 }
 
 export async function getSchoolOptions(): Promise<SchoolOption[]> {
@@ -73,7 +80,7 @@ export async function listChildren(params: ListParams<ChildSort>, filters: Child
   const query: Record<string, unknown> = {};
   if (filters.status !== "ALL") query.status = filters.status;
   if (filters.sex) query.sex = filters.sex;
-  if (params.q) query.searchText = { $regex: escapeRegex(normalizeSearch(params.q)) };
+  Object.assign(query, searchFilter(params.q, "searchText", normalizeSearch));
 
   const yearId = filters.yearId && Types.ObjectId.isValid(filters.yearId) ? new Types.ObjectId(filters.yearId) : null;
   if (yearId && (filters.enrolledOnly || filters.schoolId)) {
@@ -178,7 +185,14 @@ export async function getChildDetail(childId: string): Promise<ChildDetail | nul
       .populate<{ school: { _id: Types.ObjectId; name: string; type: SchoolType; city?: string } }>("school", "name type city")
       .lean(),
     Sponsorship.countDocuments({ child: id }),
-    AuditLog.find({ entityType: "Child", entityId: id }).sort({ at: -1 }).limit(30).lean(),
+    Sponsorship.find({ child: id }, { _id: 1 })
+      .lean()
+      .then((rows) =>
+        AuditLog.find({ $or: [{ entityType: "Child", entityId: id }, { entityType: "Sponsorship", entityId: { $in: rows.map((r) => r._id) } }] })
+          .sort({ at: -1 })
+          .limit(40)
+          .lean(),
+      ),
   ]);
   if (!child) return null;
 

@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 /** Pages hors espace de gestion (connexion, changement de mot de passe obligatoire). */
 export default function AuthLayout({ children }: LayoutProps<"/">) {
@@ -13,12 +13,10 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
 
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
-            <GraduationCap className="size-5" aria-hidden />
-          </span>
+          <BrandLogo size={72} className="rounded-2xl shadow-md" />
           <div>
-            <p className="text-base font-semibold tracking-tight">Parrainage scolaire</p>
-            <p className="text-sm text-muted-foreground">Espace de gestion de l&apos;organisation</p>
+            <p className="text-base font-semibold tracking-tight">Main Tendue</p>
+            <p className="text-sm text-muted-foreground">Gestion du parrainage scolaire</p>
           </div>
         </div>
         {children}

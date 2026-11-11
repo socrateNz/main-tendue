@@ -8,14 +8,7 @@ import type { ChildData, EnrollmentData, SchoolData } from "@/features/children/
 import { SchoolYear } from "@/features/school-years/model";
 import { Sponsorship } from "@/features/sponsorships/model";
 import { recordAudit } from "@/lib/audit";
-import {
-  CLOUDINARY_FOLDERS,
-  IMAGE_MAX_BYTES,
-  destroyAsset,
-  detectImageType,
-  uploadPrivateImage,
-  type StoredAsset,
-} from "@/lib/cloudinary";
+import { CLOUDINARY_FOLDERS, destroyAsset, readImageFile, uploadPrivateImage, type StoredAsset } from "@/lib/cloudinary";
 import { nextSequence, formatNumber } from "@/lib/db/counter";
 import { connectDB, withTransaction } from "@/lib/db/mongoose";
 import { parseDateInput } from "@/lib/dates";
@@ -147,10 +140,7 @@ export async function unarchiveChild(actor: SessionUser, childId: string, ctx: R
  * est supprimée pour ne pas laisser de fichier orphelin.
  */
 export async function setChildPhoto(actor: SessionUser, childId: string, file: File, ctx: RequestContext): Promise<void> {
-  if (file.size === 0) throw new ValidationError("Le fichier est vide.");
-  if (file.size > IMAGE_MAX_BYTES) throw new ValidationError("La photo ne doit pas dépasser 3 Mo.");
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (!detectImageType(buffer)) throw new ValidationError("Format non accepté : utilisez une image JPEG, PNG ou WebP.");
+  const buffer = await readImageFile(file);
 
   await connectDB();
   const child = await Child.findById(childId, { firstName: 1, lastName: 1, code: 1, status: 1, photo: 1 }).lean();

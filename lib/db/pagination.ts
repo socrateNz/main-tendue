@@ -63,6 +63,17 @@ export function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Filtre de recherche « tous les mots » sur un champ normalisé (sans accents, minuscules) :
+ * « rotary geneve » trouve « Rotary Club de Genève ». Chaque mot est échappé (aucune regex utilisateur).
+ * À fusionner dans la requête : `{ ...query, ...searchFilter(q) }`.
+ */
+export function searchFilter(q: string, field = "searchText", normalize: (value: string) => string = (v) => v): Record<string, unknown> {
+  const words = normalize(q).split(/\s+/).filter(Boolean).slice(0, 8);
+  if (words.length === 0) return {};
+  return { $and: words.map((word) => ({ [field]: { $regex: escapeRegex(word) } })) };
+}
+
 export function toPaginated<T>(items: T[], total: number, params: { page: number; pageSize: number }): Paginated<T> {
   return {
     items,

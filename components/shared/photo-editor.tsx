@@ -5,27 +5,32 @@ import { useRouter } from "next/navigation";
 import { useRef, useTransition } from "react";
 import { toast } from "sonner";
 
-import { removeChildPhotoAction, uploadChildPhotoAction } from "@/features/children/actions";
-import { ChildAvatar } from "@/features/children/components/child-avatar";
+import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button } from "@/components/ui/button";
+import type { ActionResult } from "@/lib/errors";
 
 const MAX_BYTES = 3 * 1024 * 1024;
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
 /**
- * Photo de l'enfant. Contrôle immédiat dans le navigateur (confort) ; le serveur revérifie la taille
+ * Photo d'une fiche (enfant, sponsor). Contrôle immédiat dans le navigateur (confort) ; le serveur revérifie la taille
  * et le CONTENU réel du fichier avant de l'envoyer vers Cloudinary en ressource privée.
  */
-export function ChildPhotoEditor({
-  childId,
+export function PhotoEditor({
+  entityId,
   name,
   photoUrl,
   canEdit,
+  upload,
+  remove: removeAction,
 }: {
-  childId: string;
+  entityId: string;
   name: string;
   photoUrl: string | null;
   canEdit: boolean;
+  /** Server Action recevant un FormData { id, photo }. */
+  upload: (data: FormData) => Promise<ActionResult>;
+  remove: (id: string) => Promise<ActionResult>;
 }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
@@ -36,10 +41,10 @@ export function ChildPhotoEditor({
     if (!ACCEPTED.includes(file.type)) return void toast.error("Format non accepté : JPEG, PNG ou WebP.");
     if (file.size > MAX_BYTES) return void toast.error("La photo ne doit pas dépasser 3 Mo.");
     const data = new FormData();
-    data.set("childId", childId);
+    data.set("id", entityId);
     data.set("photo", file);
     startTransition(async () => {
-      const result = await uploadChildPhotoAction(data);
+      const result = await upload(data);
       if (input.current) input.current.value = "";
       if (!result.ok) return void toast.error(result.message);
       toast.success(result.message ?? "Photo mise à jour.");
@@ -49,7 +54,7 @@ export function ChildPhotoEditor({
 
   function remove() {
     startTransition(async () => {
-      const result = await removeChildPhotoAction(childId);
+      const result = await removeAction(entityId);
       if (!result.ok) return void toast.error(result.message);
       toast.success(result.message ?? "Photo supprimée.");
       router.refresh();
@@ -59,7 +64,7 @@ export function ChildPhotoEditor({
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative">
-        <ChildAvatar name={name} photoUrl={photoUrl} size={88} className="ring-4 ring-card shadow-sm" />
+        <PersonAvatar name={name} photoUrl={photoUrl} size={88} className="ring-4 ring-card shadow-sm" />
         {pending ? (
           <span className="absolute inset-0 flex items-center justify-center rounded-full bg-background/70" aria-live="polite">
             <Loader2 className="size-5 animate-spin text-primary" aria-label="Envoi en cours" />

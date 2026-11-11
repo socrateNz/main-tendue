@@ -16,7 +16,7 @@ export default async function AccountPage() {
   const areas = NAVIGATION.flatMap((group) => group.items).filter((item) => hasPermission(user.role, item.permission));
 
   return (
-    <PageContainer className="max-w-3xl">
+    <PageContainer>
       <PageHeader title="Mon compte" description="Vos informations de connexion et vos accès." />
 
       <section className="overflow-hidden rounded-xl border bg-card shadow-card">

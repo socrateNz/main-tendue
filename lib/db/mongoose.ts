@@ -62,6 +62,20 @@ export async function withTransaction<T>(work: (session: ClientSession) => Promi
   }
 }
 
+/**
+ * Exécute plusieurs lectures : en parallèle hors transaction, en SÉQUENCE dans une transaction
+ * (MongoDB interdit les opérations concurrentes sur une même session transactionnelle).
+ */
+export async function gather<T extends readonly unknown[]>(
+  session: ClientSession | null | undefined,
+  tasks: { readonly [K in keyof T]: () => PromiseLike<T[K]> },
+): Promise<T> {
+  if (!session) return (await Promise.all(tasks.map((task) => task()))) as unknown as T;
+  const results: unknown[] = [];
+  for (const task of tasks) results.push(await task());
+  return results as unknown as T;
+}
+
 /** Vérifie la disponibilité de la base (diagnostic). Ne lève jamais d'erreur. */
 export async function pingDatabase(): Promise<{ ok: true; latencyMs: number } | { ok: false; reason: string }> {
   const started = Date.now();

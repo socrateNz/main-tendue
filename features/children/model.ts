@@ -72,6 +72,8 @@ const childSchema = new Schema(
     archivedBy: { type: Schema.Types.ObjectId, ref: "User" },
     archiveReason: { type: String, maxlength: 500 },
     searchText: { type: String, required: true },
+    /** Nom + prénom normalisés : détection des doublons (avec la date de naissance). */
+    identityKey: { type: String, required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true, collection: "children" },
@@ -80,8 +82,16 @@ const childSchema = new Schema(
 childSchema.index({ code: 1 }, { unique: true });
 childSchema.index({ status: 1, lastName: 1, firstName: 1 });
 childSchema.index({ searchText: 1 });
+childSchema.index({ identityKey: 1, birthDate: 1 });
+
+/** Clé d'identité partagée par le modèle et le service (contrôle de doublon). */
+export function childIdentityKey(firstName: string, lastName: string): string {
+  return normalizeSearch(`${lastName} ${firstName}`);
+}
+
 childSchema.pre("validate", function () {
-  this.searchText = buildSearchText([this.code, this.firstName, this.lastName, ...this.guardians.map((g) => g.lastName)]);
+  this.searchText = buildSearchText([this.code, this.firstName, this.lastName, ...this.guardians.map((g) => `${g.firstName} ${g.lastName}`)]);
+  this.identityKey = childIdentityKey(this.firstName, this.lastName);
 });
 
 export type ChildDoc = InferSchemaType<typeof childSchema>;

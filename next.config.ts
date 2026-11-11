@@ -15,6 +15,16 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
+    serverActions: {
+      // Photos (≤ 3 Mo) envoyées par Server Action ; plafond de la plateforme Vercel : 4,5 Mo.
+      // Les vidéos, plus lourdes, seront téléversées directement vers Cloudinary (envoi signé).
+      bodySizeLimit: "4mb",
+    },
+  },
+  images: {
+    // Images Cloudinary servies par URL signée : pas d'optimisation ni de mise en cache par Next.
+    remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
+    unoptimized: true,
   },
   cacheComponents: true,
   partialPrefetching: true,

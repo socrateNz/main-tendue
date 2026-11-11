@@ -59,9 +59,20 @@ le contexte annuel.
 
 - `DRAFT` : année en préparation (parrainages et engagements possibles).
 - `ACTIVE` : année courante.
+- `REOPENED` : année clôturée puis rouverte exceptionnellement ; accepte de nouveau des mouvements.
 - `CLOSED` : aucun **nouveau** mouvement de trésorerie daté dans sa période, aucune modification ni
-  annulation de ses mouvements. Clôture séquentielle : N−1 doit être clôturée avant N.
-- Aucune année ne peut être créée **avant** l'année qui porte le solde initial (§ 3).
+  annulation de ses mouvements.
+- `archived` : archivage logique d'une année `CLOSED` (masquée des listes, rien n'est supprimé).
+
+Règles de cycle de vie (service `features/school-years/service.ts`) :
+
+| Opération | Conditions |
+|---|---|
+| Créer / modifier une période | pas de chevauchement ; pas avant l'année du solde initial ; pas avant une année clôturée ; les mouvements déjà rattachés doivent rester dans la période |
+| Activer | année `DRAFT` ; aucune autre année `ACTIVE` ; aucune année antérieure restée `DRAFT` |
+| Clôturer | année `ACTIVE` ou `REOPENED` ; période **terminée** (à partir du lendemain de la date de fin) ; toutes les années antérieures clôturées ; solde initial enregistré pour la première année |
+| Rouvrir (SUPER_ADMIN, motif ≥ 10 car.) | uniquement la **dernière** année clôturée ; l'instantané est archivé dans `reopenings[]` |
+| Supprimer | uniquement une année `DRAFT` sans aucune donnée liée (créée par erreur) ; auditée |
 
 ### Année d'un mouvement — déterminée par la date, côté serveur
 

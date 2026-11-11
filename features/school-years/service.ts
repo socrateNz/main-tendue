@@ -13,7 +13,7 @@ import { Sponsorship } from "@/features/sponsorships/model";
 import { Video } from "@/features/videos/model";
 import { recordAudit } from "@/lib/audit";
 import { formatDate, isWithinPeriod, nextUtcDay, parseDateInput, periodsOverlap, startOfUtcDay } from "@/lib/dates";
-import { withTransaction } from "@/lib/db/mongoose";
+import { gather, withTransaction } from "@/lib/db/mongoose";
 import { BusinessRuleError, ConflictError, NotFoundError } from "@/lib/errors";
 
 import type { CreateSchoolYearInput, UpdateSchoolYearInput } from "./schemas";
@@ -120,10 +120,14 @@ export async function updateSchoolYear(actor: SessionUser, input: UpdateSchoolYe
 
         // Les mouvements déjà rattachés doivent rester dans la nouvelle période.
         const outside = { schoolYear: year._id, status: "VALID" as const };
-        const [payments, expenses] = await Promise.all([
-          Payment.countDocuments({ ...outside, $or: [{ receivedAt: { $lt: start } }, { receivedAt: { $gte: nextUtcDay(end) } }] }).session(session),
-          Expense.countDocuments({ ...outside, $or: [{ spentAt: { $lt: start } }, { spentAt: { $gte: nextUtcDay(end) } }] }).session(session),
-        ]);
+        const payments = await Payment.countDocuments({
+          ...outside,
+          $or: [{ receivedAt: { $lt: start } }, { receivedAt: { $gte: nextUtcDay(end) } }],
+        }).session(session);
+        const expenses = await Expense.countDocuments({
+          ...outside,
+          $or: [{ spentAt: { $lt: start } }, { spentAt: { $gte: nextUtcDay(end) } }],
+        }).session(session);
         if (payments + expenses > 0) {
           throw new BusinessRuleError(
             `${payments + expenses} mouvement(s) financier(s) de cette année seraient hors de la nouvelle période.`,
@@ -320,14 +324,14 @@ export async function deleteDraftSchoolYear(actor: SessionUser, yearId: string, 
     if (year.status !== "DRAFT") throw new BusinessRuleError("Seule une année en préparation peut être supprimée.");
 
     const filter = { schoolYear: year._id };
-    const linked = await Promise.all([
-      Enrollment.exists(filter).session(session),
-      Sponsorship.exists(filter).session(session),
-      Commitment.exists(filter).session(session),
-      Payment.exists({ $or: [filter, { "lines.commitmentYear": year._id }] }).session(session),
-      Expense.exists(filter).session(session),
-      Video.exists(filter).session(session),
-      CashOpening.exists({ _id: CASH_OPENING_ID, schoolYear: year._id }).session(session),
+    const linked = await gather(session, [
+      () => Enrollment.exists(filter).session(session),
+      () => Sponsorship.exists(filter).session(session),
+      () => Commitment.exists(filter).session(session),
+      () => Payment.exists({ $or: [filter, { "lines.commitmentYear": year._id }] }).session(session),
+      () => Expense.exists(filter).session(session),
+      () => Video.exists(filter).session(session),
+      () => CashOpening.exists({ _id: CASH_OPENING_ID, schoolYear: year._id }).session(session),
     ]);
     if (linked.some(Boolean)) {
       throw new BusinessRuleError("Cette année contient déjà des données : elle ne peut pas être supprimée.");

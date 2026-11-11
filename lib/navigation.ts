@@ -42,7 +42,7 @@ export const NAVIGATION: NavGroup[] = [
   {
     label: "Parrainage",
     items: [
-      { title: "Enfants", href: "/enfants", icon: Users, permission: "children:read", available: false },
+      { title: "Enfants", href: "/enfants", icon: Users, permission: "children:read", available: true },
       { title: "Sponsors", href: "/sponsors", icon: HandHeart, permission: "sponsors:read", available: false },
       { title: "Parrainages", href: "/parrainages", icon: HandCoins, permission: "sponsorships:read", available: false },
     ],
@@ -61,7 +61,7 @@ export const NAVIGATION: NavGroup[] = [
   {
     label: "Administration",
     items: [
-      { title: "Années scolaires", href: "/annees-scolaires", icon: CalendarRange, permission: "schoolYears:read", available: false },
+      { title: "Années scolaires", href: "/annees-scolaires", icon: CalendarRange, permission: "schoolYears:read", available: true },
       { title: "Utilisateurs", href: "/utilisateurs", icon: UserCog, permission: "users:manage", available: true },
       { title: "Paramètres", href: "/parametres", icon: Settings, permission: "settings:manage", available: false },
     ],
@@ -72,7 +72,7 @@ export const NAVIGATION: NavGroup[] = [
 const SEGMENT_LABELS: Record<string, string> = Object.fromEntries(
   NAVIGATION.flatMap((group) => group.items.map((item) => [item.href.slice(1), item.title])),
 );
-Object.assign(SEGMENT_LABELS, { nouveau: "Nouveau", modifier: "Modifier", "mon-compte": "Mon compte", "mot-de-passe": "Mot de passe" });
+Object.assign(SEGMENT_LABELS, { nouveau: "Nouveau", modifier: "Modifier", "mon-compte": "Mon compte", "mot-de-passe": "Mot de passe", etablissements: "Établissements" });
 
 export function segmentLabel(segment: string): string | null {
   return SEGMENT_LABELS[segment] ?? null;

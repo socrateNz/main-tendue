@@ -7,7 +7,7 @@ import { Commitment } from "@/features/commitments/model";
 import { CreditApplication, Payment } from "@/features/contributions/model";
 import { Expense } from "@/features/expenses/model";
 import { SchoolYear } from "@/features/school-years/model";
-import { connectDB } from "@/lib/db/mongoose";
+import { connectDB, gather } from "@/lib/db/mongoose";
 
 import { computeClosingBalance, type SchoolYearStatus } from "./types";
 
@@ -64,11 +64,11 @@ export async function computeTreasuryOverview(session?: ClientSession): Promise<
   await connectDB();
 
   const [years, cashOpening, lineTotals, expenseTotals, commitmentTotals, allocatedByLines, allocatedByCredits, advanceBalance] =
-    await Promise.all([
-      SchoolYear.find({}, { label: 1, status: 1, startDate: 1, endDate: 1, closing: 1 }).sort({ startDate: 1 }).session(session ?? null).lean(),
-      CashOpening.findById(CASH_OPENING_ID, { schoolYear: 1, amount: 1 }).session(session ?? null).lean(),
+    await gather(session, [
+      () => SchoolYear.find({}, { label: 1, status: 1, startDate: 1, endDate: 1, closing: 1 }).sort({ startDate: 1 }).session(session ?? null).lean(),
+      () => CashOpening.findById(CASH_OPENING_ID, { schoolYear: 1, amount: 1 }).session(session ?? null).lean(),
       // Encaissements par année du MOUVEMENT et par nature de ligne.
-      Payment.aggregate<{ _id: { year: Types.ObjectId; kind: string; late: boolean }; total: number }>([
+      () => Payment.aggregate<{ _id: { year: Types.ObjectId; kind: string; late: boolean }; total: number }>([
         { $match: { status: "VALID" } },
         { $unwind: "$lines" },
         {
@@ -78,26 +78,26 @@ export async function computeTreasuryOverview(session?: ClientSession): Promise<
           },
         },
       ]).session(session ?? null),
-      Expense.aggregate<{ _id: Types.ObjectId; total: number }>([
+      () => Expense.aggregate<{ _id: Types.ObjectId; total: number }>([
         { $match: { status: "VALID" } },
         { $group: { _id: "$schoolYear", total: { $sum: "$amount" } } },
       ]).session(session ?? null),
-      Commitment.aggregate<{ _id: Types.ObjectId; total: number }>([
+      () => Commitment.aggregate<{ _id: Types.ObjectId; total: number }>([
         { $match: { status: "ACTIVE" } },
         { $group: { _id: "$schoolYear", total: { $sum: "$expectedAmount" } } },
       ]).session(session ?? null),
       // Affectations par année de l'ENGAGEMENT (et non du mouvement).
-      Payment.aggregate<{ _id: Types.ObjectId; total: number }>([
+      () => Payment.aggregate<{ _id: Types.ObjectId; total: number }>([
         { $match: { status: "VALID" } },
         { $unwind: "$lines" },
         { $match: { "lines.kind": "COMMITMENT" } },
         { $group: { _id: "$lines.commitmentYear", total: { $sum: "$lines.amount" } } },
       ]).session(session ?? null),
-      CreditApplication.aggregate<{ _id: Types.ObjectId; total: number }>([
+      () => CreditApplication.aggregate<{ _id: Types.ObjectId; total: number }>([
         { $match: { status: "VALID" } },
         { $group: { _id: "$schoolYear", total: { $sum: "$amount" } } },
       ]).session(session ?? null),
-      CreditApplication.aggregate<{ _id: null; total: number }>([
+      () => CreditApplication.aggregate<{ _id: null; total: number }>([
         { $match: { status: "VALID" } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]).session(session ?? null),

@@ -81,6 +81,47 @@ export function ListSearch({ placeholder = "Rechercher…", className }: { place
   );
 }
 
+/* -------------------------------------------------------------------------- Filtres */
+
+/** Filtre de liste lié à un paramètre d'URL (sélecteur natif : accessible et adapté au mobile). */
+export function ListFilter({
+  param,
+  label,
+  options,
+  allLabel,
+  defaultValue = "",
+  className,
+}: {
+  param: string;
+  label: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  /** Libellé de l'option « tous » ; absent : pas d'option vide. */
+  allLabel?: string;
+  /** Valeur retenue lorsque le paramètre est absent de l'URL. */
+  defaultValue?: string;
+  className?: string;
+}) {
+  const { searchParams, update } = useListNavigation();
+  const value = searchParams.get(param) ?? defaultValue;
+  return (
+    <label className={cn("flex min-w-0 flex-col gap-1 text-xs font-medium text-muted-foreground", className)}>
+      {label}
+      <select
+        value={value}
+        onChange={(event) => update({ [param]: event.target.value === defaultValue ? null : event.target.value }, { resetPage: true })}
+        className="h-9 w-full min-w-0 rounded-lg border border-input bg-card px-2.5 text-sm font-normal text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      >
+        {allLabel !== undefined ? <option value="">{allLabel}</option> : null}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 /* -------------------------------------------------------------------------- Tableau */
 
 const HIDE_BELOW: Record<NonNullable<AppColumnMeta["hideBelow"]>, string> = {

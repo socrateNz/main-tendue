@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ROLES } from "@/lib/auth/permissions";
+import { ASSIGNABLE_ROLES } from "@/lib/auth/permissions";
 
 /**
  * Validations partagées entre formulaires (client) et Server Actions (serveur).
@@ -53,7 +53,7 @@ export const createUserSchema = z.object({
   email: emailSchema,
   firstName: nameSchema("Le prénom"),
   lastName: nameSchema("Le nom"),
-  role: z.enum(ROLES, "Rôle invalide."),
+  role: z.enum(ASSIGNABLE_ROLES, "Rôle invalide."),
 });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 

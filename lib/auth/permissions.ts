@@ -9,6 +9,14 @@
 export const ROLES = ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER"] as const;
 export type Role = (typeof ROLES)[number];
 
+/**
+ * Rôles attribuables depuis l'application. Le SUPER_ADMIN est un compte technique : créé uniquement
+ * par la commande `create-admin`, invisible dans la liste des utilisateurs et non modifiable depuis
+ * l'interface.
+ */
+export const ASSIGNABLE_ROLES = ["ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER"] as const satisfies readonly Role[];
+export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
 export const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "Super administrateur",
   ADMIN: "Administrateur",
@@ -60,9 +68,8 @@ const ALL = PERMISSIONS;
 
 const MATRIX: Record<Role, readonly Permission[]> = {
   SUPER_ADMIN: ALL,
-  ADMIN: ALL.filter(
-    (p) => !["users:manage", "schoolYears:reopen", "cashbox:initialize", "finance:cancel"].includes(p),
-  ),
+  // Décision du 11/11/2026 : l'administrateur dispose de tous les droits du super administrateur.
+  ADMIN: ALL,
   FINANCE_MANAGER: [
     "dashboard:read",
     "schoolYears:read",

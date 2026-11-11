@@ -13,7 +13,7 @@ export function AccessDenied() {
         <EmptyState
           icon={ShieldOff}
           title="Accès refusé"
-          description="Votre rôle ne permet pas d'accéder à cette page. Contactez un super administrateur si nécessaire."
+          description="Votre rôle ne permet pas d'accéder à cette page. Contactez un administrateur si nécessaire."
           action={
             <Link href="/tableau-de-bord" className={buttonVariants({ variant: "outline" })}>
               Retour au tableau de bord

@@ -15,18 +15,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ROLE_LABELS, ROLES, type Role } from "@/lib/auth/permissions";
+import { ASSIGNABLE_ROLES, ROLE_LABELS, type AssignableRole } from "@/lib/auth/permissions";
 import { applyServerErrors } from "@/lib/forms";
 
-const ROLE_DESCRIPTIONS: Record<Role, string> = {
-  SUPER_ADMIN: "Accès complet, gestion des comptes, annulations et réouvertures.",
-  ADMIN: "Gestion complète du programme, sans comptes ni annulations financières.",
+const ROLE_DESCRIPTIONS: Record<AssignableRole, string> = {
+  ADMIN: "Accès complet : programme, finances (y compris annulations et réouvertures) et gestion des comptes.",
   FINANCE_MANAGER: "Engagements, versements, dépenses, annulations et rapports financiers.",
   CHILD_MANAGER: "Fiches enfants, établissements et scolarité.",
   MEDIA_MANAGER: "Vidéos de remerciement et liens d'accès des sponsors.",
 };
 
-const ROLE_ITEMS = ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }));
+const ROLE_ITEMS = ASSIGNABLE_ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }));
 
 // Le formulaire de modification ne touche pas à l'adresse e-mail (identifiant de connexion).
 const formSchema = createUserSchema;

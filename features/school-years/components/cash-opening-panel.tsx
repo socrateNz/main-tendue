@@ -115,7 +115,7 @@ export function CashOpeningPanel({
           {canInitialize ? (
             <Button onClick={() => setDialog("create")}>Enregistrer le solde initial</Button>
           ) : (
-            <p className="text-xs text-muted-foreground">Réservé au super administrateur.</p>
+            <p className="text-xs text-muted-foreground">Réservé aux administrateurs.</p>
           )}
         </div>
       )}

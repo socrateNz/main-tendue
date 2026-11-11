@@ -77,7 +77,7 @@ export async function getSetupChecks(): Promise<SetupCheck[]> {
       status: cashOpening ? "ok" : "todo",
       detail: cashOpening
         ? "Enregistré."
-        : "Non enregistré. Le super administrateur le saisira sur la première année scolaire (0 accepté).",
+        : "Non enregistré. Un administrateur le saisira sur la première année scolaire (0 accepté).",
     });
   }
 

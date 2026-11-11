@@ -14,7 +14,7 @@ import { getRequestContext, requirePermission } from "@/lib/auth/session";
 import { type ActionResult, toPublicError } from "@/lib/errors";
 import { zodFieldErrors } from "@/lib/validation";
 
-/** Toutes les actions de ce module exigent `users:manage` (SUPER_ADMIN), vérifié côté serveur. */
+/** Toutes les actions de ce module exigent `users:manage` (ADMIN, SUPER_ADMIN), vérifié côté serveur. */
 
 const USERS_PATH = "/utilisateurs";
 

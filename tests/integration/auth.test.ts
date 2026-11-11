@@ -17,7 +17,8 @@ const { Session, User } = await import("@/features/auth/model");
 const { AuditLog } = await import("@/features/audit/model");
 const { authenticate, changeOwnPassword, resolveSession, revokeSessionByToken } = await import("@/features/auth/service");
 const users = await import("@/features/users/service");
-const { BusinessRuleError, RateLimitError, ValidationError, ConflictError } = await import("@/lib/errors");
+const { BusinessRuleError, NotFoundError, RateLimitError, ValidationError, ConflictError } = await import("@/lib/errors");
+const { createUserSchema } = await import("@/features/auth/schemas");
 
 const ctx = { ip: "203.0.113.7", userAgent: "tests" };
 const ADMIN = { email: "admin@test.local", firstName: "Awa", lastName: "Test" };
@@ -143,15 +144,27 @@ describe("gestion des comptes", () => {
     await assert.rejects(loginAs("enfants@test.local", temporaryPassword, "192.0.2.15"), ValidationError);
   });
 
-  it("protège le dernier super administrateur et interdit l'auto-modification", async () => {
-    const admin = await resolveAdmin();
-    await assert.rejects(users.setUserStatus(admin, admin.id, "DISABLED", ctx), BusinessRuleError);
-    await assert.rejects(
-      users.updateUser(admin, { userId: admin.id, firstName: "Awa", lastName: "Test", role: "ADMIN" }, ctx),
-      BusinessRuleError,
-    );
-    await assert.rejects(users.resetUserPassword(admin, admin.id, ctx), BusinessRuleError);
+  it("masque le SUPER_ADMIN et le rend intouchable depuis la gestion des comptes, même pour un ADMIN", async () => {
+    const superAdmin = await resolveAdmin();
+    const listed = await users.listUsers({ page: 1, pageSize: 100, q: "", sort: "name", dir: "asc" });
+    assert.equal(listed.items.some((u) => u.email === ADMIN.email), false, "absent de la liste");
+    assert.equal((await users.listUsers({ page: 1, pageSize: 100, q: "awa", sort: "name", dir: "asc" })).total, 0, "absent des recherches");
+
+    // Un ADMIN (tous les droits) qui connaîtrait l'identifiant du SUPER_ADMIN ne peut rien faire dessus.
+    const { temporaryPassword } = await users.createUser(superAdmin, { email: "chef@test.local", firstName: "Chef", lastName: "Admin", role: "ADMIN" }, ctx);
+    const admin = await resolveSession((await loginAs("chef@test.local", temporaryPassword, "192.0.2.40")).token);
+    assert.ok(admin);
+    await assert.rejects(users.setUserStatus(admin, superAdmin.id, "DISABLED", ctx), NotFoundError);
+    await assert.rejects(users.updateUser(admin, { userId: superAdmin.id, firstName: "X", lastName: "Y", role: "MEDIA_MANAGER" }, ctx), NotFoundError);
+    await assert.rejects(users.resetUserPassword(admin, superAdmin.id, ctx), NotFoundError);
+    await assert.rejects(users.revokeSessionsOf(admin, superAdmin.id, ctx), NotFoundError);
+    assert.equal(createUserSchema.safeParse({ email: "x@test.local", firstName: "X", lastName: "Y", role: "SUPER_ADMIN" }).success, false, "rôle non attribuable");
     assert.equal(await User.countDocuments({ role: "SUPER_ADMIN", status: "ACTIVE" }), 1);
+
+    // Protections sur soi-même, pour tout administrateur.
+    await assert.rejects(users.setUserStatus(admin, admin.id, "DISABLED", ctx), BusinessRuleError);
+    await assert.rejects(users.updateUser(admin, { userId: admin.id, firstName: "Chef", lastName: "Admin", role: "MEDIA_MANAGER" }, ctx), BusinessRuleError);
+    await assert.rejects(users.resetUserPassword(admin, admin.id, ctx), BusinessRuleError);
   });
 
   it("réinitialise un mot de passe : l'ancien ne fonctionne plus", async () => {

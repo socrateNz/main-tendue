@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { newPasswordSchema } from "@/features/auth/schemas";
 import { HOME_PATH, safeRedirectPath } from "@/lib/auth/config";
-import { hasPermission, PERMISSIONS, ROLES, type Permission, type Role } from "@/lib/auth/permissions";
+import { ASSIGNABLE_ROLES, hasPermission, PERMISSIONS, ROLES, type Permission, type Role } from "@/lib/auth/permissions";
 import { readSessionToken, signSessionToken } from "@/lib/auth/token";
 
 const SECRET = "a".repeat(48);
@@ -11,14 +11,19 @@ const SECRET = "a".repeat(48);
 describe("matrice des permissions", () => {
   const allowed = (permission: Permission): Role[] => ROLES.filter((role) => hasPermission(role, permission));
 
-  it("réserve la gestion des comptes, le solde initial et la réouverture au SUPER_ADMIN", () => {
-    assert.deepEqual(allowed("users:manage"), ["SUPER_ADMIN"]);
-    assert.deepEqual(allowed("cashbox:initialize"), ["SUPER_ADMIN"]);
-    assert.deepEqual(allowed("schoolYears:reopen"), ["SUPER_ADMIN"]);
+  it("réserve la gestion des comptes, le solde initial et la réouverture aux administrateurs", () => {
+    assert.deepEqual(allowed("users:manage"), ["SUPER_ADMIN", "ADMIN"]);
+    assert.deepEqual(allowed("cashbox:initialize"), ["SUPER_ADMIN", "ADMIN"]);
+    assert.deepEqual(allowed("schoolYears:reopen"), ["SUPER_ADMIN", "ADMIN"]);
   });
 
-  it("réserve l'annulation des mouvements financiers au FINANCE_MANAGER et au SUPER_ADMIN", () => {
-    assert.deepEqual(allowed("finance:cancel"), ["SUPER_ADMIN", "FINANCE_MANAGER"]);
+  it("réserve l'annulation des mouvements financiers aux administrateurs et au FINANCE_MANAGER", () => {
+    assert.deepEqual(allowed("finance:cancel"), ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER"]);
+  });
+
+  it("donne à l'ADMIN exactement les droits du SUPER_ADMIN, sans pouvoir attribuer le rôle SUPER_ADMIN", () => {
+    for (const permission of PERMISSIONS) assert.equal(hasPermission("ADMIN", permission), true, permission);
+    assert.equal((ASSIGNABLE_ROLES as readonly string[]).includes("SUPER_ADMIN"), false);
   });
 
   it("interdit les opérations financières aux gestionnaires des enfants et des médias", () => {

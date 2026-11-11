@@ -7,7 +7,7 @@ import type { CreateUserInput, UpdateUserInput } from "@/features/auth/schemas";
 import { actorOf, revokeUserSessions, type RequestContext, type SessionUser } from "@/features/auth/service";
 import { recordAudit, SYSTEM_ACTOR } from "@/lib/audit";
 import { generateTemporaryPassword, hashPassword } from "@/lib/auth/password";
-import { ROLE_LABELS, type Role } from "@/lib/auth/permissions";
+import { ROLE_LABELS, type AssignableRole } from "@/lib/auth/permissions";
 import { connectDB, withTransaction } from "@/lib/db/mongoose";
 import { escapeRegex, toPaginated, type ListParams, type Paginated } from "@/lib/db/pagination";
 import { BusinessRuleError, ConflictError, NotFoundError } from "@/lib/errors";
@@ -15,7 +15,11 @@ import { fullName } from "@/lib/text";
 
 /**
  * Gestion des comptes de l'organisation. Les contrôles de permission sont faits par l'appelant
- * (Server Action) ; ce service applique les règles métier (dernier super administrateur, etc.).
+ * (Server Action) ; ce service applique les règles métier.
+ *
+ * Le SUPER_ADMIN est un compte technique MASQUÉ : absent de la liste et des recherches, et toute
+ * opération de gestion qui le vise répond « Compte introuvable », même si l'identifiant est connu.
+ * Seul ce compte peut modifier ses propres informations de connexion (via « Mon compte »).
  */
 
 export type UserListItem = {
@@ -24,7 +28,7 @@ export type UserListItem = {
   name: string;
   firstName: string;
   lastName: string;
-  role: Role;
+  role: AssignableRole;
   status: "ACTIVE" | "DISABLED";
   mustChangePassword: boolean;
   lastLoginAt: string | null;
@@ -45,7 +49,7 @@ const SORT_FIELDS: Record<UserSort, string> = {
 
 export async function listUsers(params: ListParams<UserSort>): Promise<Paginated<UserListItem>> {
   await connectDB();
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { role: { $ne: HIDDEN_ROLE } };
   if (params.q) {
     const pattern = new RegExp(escapeRegex(params.q), "i");
     filter.$or = [{ email: pattern }, { firstName: pattern }, { lastName: pattern }];
@@ -67,7 +71,7 @@ export async function listUsers(params: ListParams<UserSort>): Promise<Paginated
   ]);
   const sessionsByUser = new Map(counts.map((c) => [c._id.toString(), c.count]));
 
-  const items = users.map<UserListItem>((user) => ({
+  const items = users.filter(isManageable).map<UserListItem>((user) => ({
     id: user._id.toString(),
     email: user.email,
     name: fullName(user),
@@ -83,13 +87,24 @@ export async function listUsers(params: ListParams<UserSort>): Promise<Paginated
   return toPaginated(items, total, params);
 }
 
+const HIDDEN_ROLE = "SUPER_ADMIN" as const;
+
+function isManageable<T extends { role: string }>(user: T): user is T & { role: AssignableRole } {
+  return user.role !== HIDDEN_ROLE;
+}
+
+/** Compte gérable depuis l'application : le compte technique SUPER_ADMIN est traité comme inexistant. */
+async function loadManageable(userId: string, session?: ClientSession) {
+  if (!Types.ObjectId.isValid(userId)) throw new NotFoundError("Compte introuvable.");
+  const user = await User.findById(userId).session(session ?? null).lean();
+  if (!user || !isManageable(user)) throw new NotFoundError("Compte introuvable.");
+  return user;
+}
+
 function isDuplicateKey(error: unknown): boolean {
   return error instanceof mongo.MongoServerError && error.code === 11000;
 }
 
-async function countOtherActiveSuperAdmins(excludeId: Types.ObjectId, session: ClientSession): Promise<number> {
-  return User.countDocuments({ _id: { $ne: excludeId }, role: "SUPER_ADMIN", status: "ACTIVE" }).session(session);
-}
 
 /** Crée un compte avec un mot de passe temporaire, retourné UNE seule fois à l'appelant. */
 export async function createUser(actor: SessionUser, input: CreateUserInput, ctx: RequestContext) {
@@ -121,16 +136,10 @@ export async function createUser(actor: SessionUser, input: CreateUserInput, ctx
 
 export async function updateUser(actor: SessionUser, input: UpdateUserInput, ctx: RequestContext): Promise<void> {
   await withTransaction(async (session) => {
-    const user = await User.findById(input.userId).session(session).lean();
-    if (!user) throw new NotFoundError("Compte introuvable.");
+    const user = await loadManageable(input.userId, session);
 
-    if (user.role !== input.role) {
-      if (user._id.toString() === actor.id) {
-        throw new BusinessRuleError("Vous ne pouvez pas modifier votre propre rôle.");
-      }
-      if (user.role === "SUPER_ADMIN" && user.status === "ACTIVE" && (await countOtherActiveSuperAdmins(user._id, session)) === 0) {
-        throw new BusinessRuleError("Il doit rester au moins un super administrateur actif.");
-      }
+    if (user.role !== input.role && user._id.toString() === actor.id) {
+      throw new BusinessRuleError("Vous ne pouvez pas modifier votre propre rôle.");
     }
 
     const before = { firstName: user.firstName, lastName: user.lastName, role: user.role };
@@ -157,14 +166,10 @@ export async function setUserStatus(
   ctx: RequestContext,
 ): Promise<void> {
   await withTransaction(async (session) => {
-    const user = await User.findById(userId).session(session).lean();
-    if (!user) throw new NotFoundError("Compte introuvable.");
+    const user = await loadManageable(userId, session);
     if (user.status === status) return;
-    if (status === "DISABLED") {
-      if (user._id.toString() === actor.id) throw new BusinessRuleError("Vous ne pouvez pas désactiver votre propre compte.");
-      if (user.role === "SUPER_ADMIN" && (await countOtherActiveSuperAdmins(user._id, session)) === 0) {
-        throw new BusinessRuleError("Il doit rester au moins un super administrateur actif.");
-      }
+    if (status === "DISABLED" && user._id.toString() === actor.id) {
+      throw new BusinessRuleError("Vous ne pouvez pas désactiver votre propre compte.");
     }
     await User.updateOne({ _id: user._id }, { $set: { status } }, { session, runValidators: true });
     if (status === "DISABLED") {
@@ -187,8 +192,7 @@ export async function resetUserPassword(actor: SessionUser, userId: string, ctx:
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
   await withTransaction(async (session) => {
-    const user = await User.findById(userId).session(session).lean();
-    if (!user) throw new NotFoundError("Compte introuvable.");
+    const user = await loadManageable(userId, session);
     await User.updateOne(
       { _id: user._id },
       { $set: { passwordHash, mustChangePassword: true, passwordChangedAt: new Date() } },
@@ -207,8 +211,7 @@ export async function resetUserPassword(actor: SessionUser, userId: string, ctx:
 
 export async function revokeSessionsOf(actor: SessionUser, userId: string, ctx: RequestContext): Promise<number> {
   await connectDB();
-  const user = await User.findById(userId, { firstName: 1, lastName: 1 }).lean();
-  if (!user) throw new NotFoundError("Compte introuvable.");
+  const user = await loadManageable(userId);
   const count = await revokeUserSessions(userId, userId === actor.id ? { exceptSessionId: actor.sessionId } : {});
   await recordAudit(actorOf(actor, ctx), {
     action: "user.sessions.revoke",

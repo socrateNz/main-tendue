@@ -263,7 +263,7 @@ clôture(Y)       = ouverture(Y) + contributions(Y) + dons(Y) + avances(Y) − d
 
 S'applique à `payments`, `credit_applications`, `expenses`.
 
-- Réservée à **FINANCE_MANAGER** et **SUPER_ADMIN** ; motif obligatoire ; auteur et horodatage enregistrés.
+- Réservée à **FINANCE_MANAGER**, **ADMIN** et **SUPER_ADMIN** ; motif obligatoire ; auteur et horodatage enregistrés.
 - Le mouvement reste consultable avec le statut « Annulé » ; il ne peut être ni réactivé ni modifié.
 - Les rapports excluent les mouvements annulés.
 - Interdite si l'année du **mouvement** est `CLOSED` (sauf réouverture préalable). Une affectation tardive
@@ -304,15 +304,15 @@ lastAttemptAt, lastError, deletedAt }`.
 
 | Action | SUPER_ADMIN | ADMIN | FINANCE_MANAGER | CHILD_MANAGER | MEDIA_MANAGER |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Utilisateurs | ✔ | | | | |
-| Solde initial de caisse (création, correction) | ✔ | | | | |
+| Utilisateurs (hors compte SUPER_ADMIN, masqué) | ✔ | ✔ | | | |
+| Solde initial de caisse (création, correction) | ✔ | ✔ | | | |
 | Années : créer / activer / clôturer | ✔ | ✔ | | | |
-| Année : réouverture | ✔ | | | | |
+| Année : réouverture | ✔ | ✔ | | | |
 | Enfants, établissements, scolarité | ✔ | ✔ | lecture | ✔ | lecture |
 | Sponsors, parrainages | ✔ | ✔ | ✔ | lecture | lecture |
 | Engagements | ✔ | ✔ | ✔ | lecture | |
 | Versements, dons, avances, affectations d'avances | ✔ | ✔ | ✔ | | |
-| Mouvements financiers : annuler | ✔ | | ✔ | | |
+| Mouvements financiers : annuler | ✔ | ✔ | ✔ | | |
 | Dépenses : saisir | ✔ | ✔ | ✔ | | |
 | Catégories de dépenses | ✔ | ✔ | ✔ | | |
 | Vidéos : importer, liens, révoquer | ✔ | ✔ | | | ✔ |
@@ -320,6 +320,12 @@ lastAttemptAt, lastError, deletedAt }`.
 | Journal d'audit | ✔ | ✔ | | | |
 
 La matrice fait foi dans `lib/auth/permissions.ts` ; chaque service vérifie la permission côté serveur.
+
+**Décision du 11/11/2026** : l'ADMIN dispose de tous les droits du SUPER_ADMIN. Le SUPER_ADMIN est un
+compte technique : créé uniquement par `npm run create-admin`, il n'apparaît pas dans la liste des
+utilisateurs, son rôle ne peut pas être attribué depuis l'application, et toute opération de gestion
+qui le vise (modification, désactivation, réinitialisation, fermeture de sessions) répond « Compte
+introuvable », y compris pour un ADMIN. Ses actions restent tracées normalement dans le journal d'audit.
 
 ---
 

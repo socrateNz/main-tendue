@@ -16,7 +16,7 @@ import { zodFieldErrors } from "@/lib/validation";
 
 /**
  * Saisie : `payments:write` (FINANCE_MANAGER, ADMIN, SUPER_ADMIN).
- * Annulation : `finance:cancel` (FINANCE_MANAGER, SUPER_ADMIN uniquement).
+ * Annulation : `finance:cancel` (FINANCE_MANAGER, ADMIN, SUPER_ADMIN).
  */
 
 function invalid(error: Parameters<typeof zodFieldErrors>[0]): ActionResult<never> {

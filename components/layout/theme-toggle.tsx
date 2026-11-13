@@ -3,6 +3,8 @@
 import { Laptop, Moon, Sun } from "lucide-react";
 
 import { useTheme } from "@/components/layout/theme-provider";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { THEMES, THEME_LABELS, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -34,5 +36,33 @@ export function ThemeToggle({ className }: { className?: string }) {
         );
       })}
     </div>
+  );
+}
+
+/** Bouton compact de l'en-tête : l'icône suit le thème affiché ; le menu propose les trois choix. */
+export function ThemeMenu() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" aria-label="Changer le thème" title="Thème" />}
+      >
+        <Sun className="size-4 dark:hidden" aria-hidden />
+        <Moon className="hidden size-4 dark:block" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as Theme)}>
+          {THEMES.map((value) => {
+            const Icon = ICONS[value];
+            return (
+              <DropdownMenuRadioItem key={value} value={value}>
+                <Icon aria-hidden />
+                {THEME_LABELS[value]}
+              </DropdownMenuRadioItem>
+            );
+          })}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

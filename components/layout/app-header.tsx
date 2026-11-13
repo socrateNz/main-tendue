@@ -12,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { ThemeMenu } from "@/components/layout/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { segmentLabel } from "@/lib/navigation";
@@ -52,7 +53,10 @@ export function AppHeader({ actions }: { actions?: React.ReactNode }) {
           })}
         </BreadcrumbList>
       </Breadcrumb>
-      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+      <div className="flex items-center gap-2">
+        {actions}
+        <ThemeMenu />
+      </div>
     </header>
   );
 }

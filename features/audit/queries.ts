@@ -24,6 +24,7 @@ export const AUDIT_DOMAINS: Record<string, string> = {
   expense: "Dépenses",
   expenseCategory: "Catégories de dépenses",
   video: "Vidéos",
+  import: "Imports Excel",
 };
 
 export type AuditItem = { id: string; at: string; actor: string; action: string; domain: string; summary: string; ip: string | null };

@@ -31,6 +31,7 @@ export const PERMISSIONS = [
   "users:manage",
   "audit:read",
   "settings:manage",
+  "data:import", // import Excel (établissements, enfants, sponsors, parrainages) — administrateurs uniquement
 
   "schoolYears:read",
   "schoolYears:manage", // créer, modifier, activer, clôturer

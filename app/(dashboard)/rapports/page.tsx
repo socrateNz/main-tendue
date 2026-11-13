@@ -39,7 +39,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/rapports
     <PageContainer>
       <PageHeader
         title="Rapports"
-        description="Rapports calculés sur les données réelles, selon les règles comptables validées. Export Excel (CSV) et impression en PDF."
+        description="Rapports calculés sur les données réelles, selon les règles comptables validées. Export Excel (.xlsx) et impression en PDF."
         actions={
           report && report.rows.length > 0 ? (
             <div className="no-print flex gap-2">

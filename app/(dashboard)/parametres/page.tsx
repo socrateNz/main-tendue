@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
-import { CheckCircle2, CircleDashed, ScrollText, XCircle } from "lucide-react";
+import { CheckCircle2, CircleDashed, FileUp, ScrollText, XCircle } from "lucide-react";
 
 import { getSetupChecks, type SetupCheck } from "@/features/dashboard/setup";
 import { AccessDenied } from "@/components/shared/access-denied";
@@ -24,12 +24,20 @@ export default async function SettingsPage() {
         title="Paramètres"
         description="État de la configuration et des services externes. Les valeurs secrètes ne sont jamais affichées."
         actions={
-          hasPermission(auth.user.role, "audit:read") ? (
-            <Link href="/parametres/journal" className={buttonVariants({ variant: "outline" })}>
-              <ScrollText aria-hidden />
-              Journal d&apos;audit
-            </Link>
-          ) : null
+          <div className="flex flex-wrap gap-2">
+            {hasPermission(auth.user.role, "data:import") ? (
+              <Link href="/parametres/import" className={buttonVariants({ variant: "outline" })}>
+                <FileUp aria-hidden />
+                Import Excel
+              </Link>
+            ) : null}
+            {hasPermission(auth.user.role, "audit:read") ? (
+              <Link href="/parametres/journal" className={buttonVariants({ variant: "outline" })}>
+                <ScrollText aria-hidden />
+                Journal d&apos;audit
+              </Link>
+            ) : null}
+          </div>
         }
       />
       <section aria-labelledby="setup-title" className="overflow-hidden rounded-xl border bg-card shadow-card">

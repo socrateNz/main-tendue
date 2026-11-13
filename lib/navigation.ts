@@ -78,7 +78,7 @@ export const NAVIGATION: NavGroup[] = [
 const SEGMENT_LABELS: Record<string, string> = Object.fromEntries(
   NAVIGATION.flatMap((group) => group.items.map((item) => [item.href.slice(1), item.title])),
 );
-Object.assign(SEGMENT_LABELS, { nouveau: "Nouveau", modifier: "Modifier", "mon-compte": "Mon compte", "mot-de-passe": "Mot de passe", etablissements: "Établissements", nouvelle: "Nouvelle", categories: "Catégories", journal: "Journal d'audit" });
+Object.assign(SEGMENT_LABELS, { nouveau: "Nouveau", modifier: "Modifier", "mon-compte": "Mon compte", "mot-de-passe": "Mot de passe", etablissements: "Établissements", nouvelle: "Nouvelle", categories: "Catégories", journal: "Journal d'audit", import: "Import Excel" });
 
 export function segmentLabel(segment: string): string | null {
   return SEGMENT_LABELS[segment] ?? null;

@@ -42,7 +42,7 @@ Utiliser des secrets **différents** en local et en production.
 |---|---|
 | `npm run dev` / `build` / `start` | Développement, build, serveur de production |
 | `npm run lint` / `typecheck` | ESLint, TypeScript |
-| `npm test` | Tests unitaires (règles financières, sécurité, dates, CSV) |
+| `npm test` | Tests unitaires (règles financières, sécurité, dates, CSV, conversions d'import) |
 | `npm run test:integration` | Tests sur MongoDB : chaque exécution crée **et supprime** sa propre base `parrainage_test_<horodatage>` ; la base applicative n'est jamais touchée |
 | `npm run check:services` | Diagnostic des services externes |
 | `npm run db:indexes` | Synchronise les index (à lancer après une évolution des modèles et avant la mise en production) |
@@ -71,7 +71,7 @@ features/<domaine>/       model.ts · schemas.ts (Zod) · service.ts (règles, t
 lib/                      auth/ (sessions, permissions) · db/ · cloudinary/ · security/ · money.ts · dates.ts
 components/               ui/ (shadcn sur Base UI) · shared/ · layout/
 proxy.ts                  contrôle rapide du cookie de session (la vérification réelle est côté serveur)
-docs/modele-donnees.md    modèle de données et règles financières validées
+docs/modele-donnees.md    modèle de données, règles financières validées, import Excel (§ 13)
 ```
 
 Principes : chaque page et chaque action vérifient la permission côté serveur ; toute mutation

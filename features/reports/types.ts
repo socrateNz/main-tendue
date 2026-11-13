@@ -1,6 +1,6 @@
 import type { Permission } from "@/lib/auth/permissions";
 
-/** Format commun d'un rapport : le même objet alimente l'affichage et l'export Excel (CSV). */
+/** Format commun d'un rapport : le même objet alimente l'affichage et l'export Excel (.xlsx). */
 export type ReportColumn = { key: string; label: string; kind: "text" | "money" | "number" | "percent" };
 export type ReportRow = Record<string, string | number | null>;
 export type Report = {

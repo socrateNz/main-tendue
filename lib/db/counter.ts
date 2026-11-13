@@ -30,6 +30,14 @@ export async function nextSequence(key: string, session?: ClientSession): Promis
   return doc.seq;
 }
 
+/** Réserve `count` numéros consécutifs en une opération ; retourne le premier. */
+export async function reserveSequence(key: string, count: number, session?: ClientSession): Promise<number> {
+  if (count <= 0) return 0;
+  const doc = await Counter.findOneAndUpdate({ _id: key }, { $inc: { seq: count } }, { upsert: true, returnDocument: "after", session }).lean();
+  if (!doc) throw new Error(`Compteur ${key} indisponible.`);
+  return doc.seq - count + 1;
+}
+
 export function formatNumber(prefix: string, seq: number, digits = 6): string {
   return `${prefix}-${String(seq).padStart(digits, "0")}`;
 }

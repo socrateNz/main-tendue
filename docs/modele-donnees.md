@@ -319,6 +319,7 @@ lastAttemptAt, lastError, deletedAt }`.
 | Vidéos : mettre à disposition, liens, révoquer | ✔ | ✔ | | | ✔ | |
 | Rapports financiers | ✔ | ✔ | ✔ | | | |
 | Journal d'audit | ✔ | ✔ | | | | |
+| Import Excel des données | ✔ | ✔ | | | | |
 
 La matrice fait foi dans `lib/auth/permissions.ts` ; chaque service vérifie la permission côté serveur.
 
@@ -338,3 +339,29 @@ incrémente, **dans la même transaction**, un compteur de version : `commitment
 simultanées sur le même engagement ou la même avance entrent en conflit d'écriture : MongoDB en rejette
 une, qui est rejouée avec les montants à jour, puis refusée si le plafond est atteint. Ce comportement
 est couvert par un test d'intégration (deux versements simultanés : un seul passe).
+
+---
+
+## 13. Import Excel (reprise des données)
+
+Décision du 13/11/2026 : périmètre et comportement validés.
+
+- **Périmètre** : établissements, enfants (avec la scolarité d'une année), sponsors, parrainages et leur
+  engagement. **Aucun** versement, don, avance ni dépense n'est importé : l'historique financier se
+  saisit dans l'application, avec ses contrôles.
+- **Modèle** : `/api/import/modele` (feuilles Instructions, Établissements, Enfants, Sponsors,
+  Parrainages ; listes déroulantes ; années non clôturées). 2 Mo et 2 000 lignes au maximum.
+- **Analyse sans écriture** : chaque ligne passe par les mêmes schémas Zod que la saisie manuelle ;
+  les références sont résolues dans la base et dans le fichier (enfant par « Référence import » ou
+  code ENF-…, sponsor par e-mail ou code SPN-…).
+- **Tout ou rien** : la moindre erreur bloque l'import entier. À l'exécution, le plan est recalculé
+  **dans** une transaction unique puis appliqué ; une erreur annule tout.
+- **Doublons** : une ligne déjà présente (établissement même nom + ville ; enfant même nom, prénom et
+  date de naissance ; sponsor même e-mail ; parrainage même sponsor × enfant × année) est ignorée et
+  signalée. Un doublon interne au fichier est une erreur. Un même fichier peut donc être réimporté
+  sans effet.
+- **Règles reprises** : sponsor et enfant actifs, année non clôturée, date de début dans l'année,
+  montant engagé entier > 0 (attendu = engagé). Codes ENF-/SPN- réservés dans la transaction.
+- **Traçabilité** : une entrée d'audit `import.run` (fichier, nombres créés et ignorés) ; rapport
+  d'analyse et rapport d'import téléchargeables (CSV).
+

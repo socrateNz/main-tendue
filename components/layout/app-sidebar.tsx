@@ -26,7 +26,7 @@ export function AppSidebar({ permissions, footer }: { permissions: readonly Perm
   const { isMobile, setOpenMobile } = useSidebar();
   const allowed = new Set(permissions);
   // Affichage uniquement : chaque page et chaque action revérifient la permission côté serveur.
-  const groups = NAVIGATION.map((group) => ({ ...group, items: group.items.filter((item) => allowed.has(item.permission)) })).filter(
+  const groups = NAVIGATION.map((group) => ({ ...group, items: group.items.filter((item) => allowed.has(item.permission) && !(item.hiddenWith && allowed.has(item.hiddenWith))) })).filter(
     (group) => group.items.length > 0,
   );
 

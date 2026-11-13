@@ -6,7 +6,7 @@
  * pour adapter l'affichage. Masquer un bouton n'est jamais une mesure de sécurité.
  */
 
-export const ROLES = ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER"] as const;
+export const ROLES = ["SUPER_ADMIN", "ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER", "VIDEO_UPLOADER"] as const;
 export type Role = (typeof ROLES)[number];
 
 /**
@@ -14,7 +14,7 @@ export type Role = (typeof ROLES)[number];
  * par la commande `create-admin`, invisible dans la liste des utilisateurs et non modifiable depuis
  * l'interface.
  */
-export const ASSIGNABLE_ROLES = ["ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER"] as const satisfies readonly Role[];
+export const ASSIGNABLE_ROLES = ["ADMIN", "FINANCE_MANAGER", "CHILD_MANAGER", "MEDIA_MANAGER", "VIDEO_UPLOADER"] as const satisfies readonly Role[];
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 export const ROLE_LABELS: Record<Role, string> = {
@@ -23,6 +23,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   FINANCE_MANAGER: "Responsable financier",
   CHILD_MANAGER: "Gestionnaire des enfants",
   MEDIA_MANAGER: "Gestionnaire des médias",
+  VIDEO_UPLOADER: "Contributeur vidéo",
 };
 
 export const PERMISSIONS = [
@@ -57,7 +58,8 @@ export const PERMISSIONS = [
   "finance:cancel", // annulation des mouvements financiers
 
   "videos:read",
-  "videos:write", // import, liens, révocation, échéance
+  "videos:upload", // import d'une vidéo (sans mise à disposition ni gestion des liens)
+  "videos:write", // mise à disposition, liens, révocation, échéance
 
   "reports:read",
   "reports:finance",
@@ -108,9 +110,12 @@ const MATRIX: Record<Role, readonly Permission[]> = {
     "sponsors:read",
     "sponsorships:read",
     "videos:read",
+    "videos:upload",
     "videos:write",
     "reports:read",
   ],
+  /** Rôle restreint : importe des vidéos et ne voit rien d'autre (ni liste des vidéos, ni fiches, ni montants). */
+  VIDEO_UPLOADER: ["dashboard:read", "videos:upload"],
 };
 
 const SETS = new Map<Role, ReadonlySet<Permission>>(ROLES.map((role) => [role, new Set(MATRIX[role])]));

@@ -15,12 +15,16 @@ import {
   updateVideoExpiry,
   type GeneratedLink,
 } from "@/features/videos/service";
+import { searchChildOptions, type PickerOption } from "@/features/sponsors/queries";
 import { getRequestContext, requirePermission } from "@/lib/auth/session";
 import { parseDateInput } from "@/lib/dates";
 import { type ActionResult, toPublicError } from "@/lib/errors";
 import { zodFieldErrors } from "@/lib/validation";
 
-/** Toutes les actions exigent `videos:write` (MEDIA_MANAGER, ADMIN, SUPER_ADMIN). */
+/**
+ * Import : `videos:upload` (dont le rôle restreint « Contributeur vidéo »).
+ * Mise à disposition, liens, échéance, révocation : `videos:write` (MEDIA_MANAGER, ADMIN, SUPER_ADMIN).
+ */
 
 function invalid(error: Parameters<typeof zodFieldErrors>[0]): ActionResult<never> {
   return { ok: false, code: "VALIDATION", message: "Vérifiez les champs signalés.", fieldErrors: zodFieldErrors(error) };
@@ -33,7 +37,7 @@ function refresh(videoId?: string) {
 
 export async function prepareVideoUploadAction(): Promise<ActionResult<ReturnType<typeof prepareVideoUpload>>> {
   try {
-    await requirePermission("videos:write");
+    await requirePermission("videos:upload");
     return { ok: true, data: prepareVideoUpload() };
   } catch (error) {
     return toPublicError(error);
@@ -50,12 +54,22 @@ const registerSchema = z.object({
 
 export async function registerVideoAction(input: unknown): Promise<ActionResult<{ videoId: string }>> {
   try {
-    const actor = await requirePermission("videos:write");
+    const actor = await requirePermission("videos:upload");
     const parsed = registerSchema.safeParse(input);
     if (!parsed.success) return invalid(parsed.error);
     const videoId = await registerVideo(actor, parsed.data, await getRequestContext());
     refresh();
     return { ok: true, data: { videoId }, message: "Vidéo importée." };
+  } catch (error) {
+    return toPublicError(error);
+  }
+}
+
+/** Recherche d'enfants pour l'import (fiches actives, 10 résultats, nom et code uniquement). */
+export async function searchChildrenForVideoAction(q: unknown): Promise<ActionResult<PickerOption[]>> {
+  try {
+    await requirePermission("videos:upload");
+    return { ok: true, data: await searchChildOptions(typeof q === "string" ? q.slice(0, 100) : "") };
   } catch (error) {
     return toPublicError(error);
   }

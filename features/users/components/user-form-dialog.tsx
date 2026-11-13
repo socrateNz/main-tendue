@@ -23,6 +23,7 @@ const ROLE_DESCRIPTIONS: Record<AssignableRole, string> = {
   FINANCE_MANAGER: "Engagements, versements, dépenses, annulations et rapports financiers.",
   CHILD_MANAGER: "Fiches enfants, établissements et scolarité.",
   MEDIA_MANAGER: "Vidéos de remerciement et liens d'accès des sponsors.",
+  VIDEO_UPLOADER: "Importe uniquement des vidéos ; ne voit ni les fiches, ni les montants, ni les liens des sponsors.",
 };
 
 const ROLE_ITEMS = ASSIGNABLE_ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }));

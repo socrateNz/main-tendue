@@ -10,6 +10,7 @@ import {
   Settings,
   UserCog,
   Users,
+  Upload,
   Video,
 } from "lucide-react";
 
@@ -26,6 +27,8 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   permission: Permission;
+  /** Masque l'entrée si l'utilisateur a déjà cette permission (évite les doublons de menu). */
+  hiddenWith?: Permission;
   available: boolean;
 };
 
@@ -56,7 +59,10 @@ export const NAVIGATION: NavGroup[] = [
   },
   {
     label: "Médias",
-    items: [{ title: "Vidéos", href: "/videos", icon: Video, permission: "videos:read", available: true }],
+    items: [
+      { title: "Vidéos", href: "/videos", icon: Video, permission: "videos:read", available: true },
+      { title: "Importer une vidéo", href: "/videos/nouvelle", icon: Upload, permission: "videos:upload", hiddenWith: "videos:read", available: true },
+    ],
   },
   {
     label: "Administration",

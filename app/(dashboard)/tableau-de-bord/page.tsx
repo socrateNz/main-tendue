@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Banknote, HandCoins, HandHeart, Landmark, PiggyBank, Receipt, Scale, Users } from "lucide-react";
+import { Banknote, HandCoins, HandHeart, Landmark, PiggyBank, Receipt, Scale, Upload, Users } from "lucide-react";
 
 import { getYearOptions } from "@/features/children/queries";
 import { ExpensesChart, InflowsChart } from "@/features/dashboard/components/dashboard-charts";
@@ -66,6 +66,23 @@ export default async function DashboardPage({ searchParams }: PageProps<"/tablea
         </div>
       ) : null}
 
+      {!hasPermission(role, "children:read") && hasPermission(role, "videos:upload") ? (
+        <div className="rounded-xl border bg-card shadow-card">
+          <EmptyState
+            icon={Upload}
+            title="Importer une vidéo de remerciement"
+            description="Choisissez l'enfant et l'année, puis envoyez la vidéo. Un gestionnaire des médias la mettra ensuite à disposition des sponsors."
+            action={
+              <Link href="/videos/nouvelle" className={buttonVariants()}>
+                <Upload aria-hidden />
+                Importer une vidéo
+              </Link>
+            }
+          />
+        </div>
+      ) : null}
+
+      {hasPermission(role, "children:read") ? (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Enfants suivis" icon={Users} value={data.counts.children} hint="Fiches actives." />
         <StatCard label="Sponsors actifs" icon={HandHeart} value={data.counts.activeSponsors} />
@@ -79,6 +96,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/tablea
           />
         ) : null}
       </div>
+      ) : null}
 
       {f ? (
         <>

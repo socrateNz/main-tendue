@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { searchChildrenAction } from "@/features/sponsors/actions";
-import { prepareVideoUploadAction, registerVideoAction } from "@/features/videos/actions";
+import { prepareVideoUploadAction, registerVideoAction, searchChildrenForVideoAction } from "@/features/videos/actions";
 import { EntityPicker, type PickerValue } from "@/components/shared/entity-picker";
 import { FormSection } from "@/components/shared/form-section";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -31,7 +30,7 @@ function uploadWithProgress(url: string, data: FormData, onProgress: (percent: n
   });
 }
 
-export function VideoUploadForm({ years }: { years: Array<{ id: string; label: string; current: boolean }> }) {
+export function VideoUploadForm({ years, canManage }: { years: Array<{ id: string; label: string; current: boolean }>; canManage: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [child, setChild] = useState<PickerValue | null>(null);
@@ -72,9 +71,20 @@ export function VideoUploadForm({ years }: { years: Array<{ id: string; label: s
       await uploadWithProgress(prepared.data.uploadUrl, data, setProgress);
       const result = await registerVideoAction({ publicId: prepared.data.publicId, childId: child.id, schoolYearId: yearId, title, message });
       if (!result.ok) throw new Error(result.message);
-      toast.success("Vidéo importée. Mettez-la à disposition pour générer les liens des sponsors.");
-      router.push(`/videos/${result.data.videoId}`);
-      router.refresh();
+      if (canManage) {
+        toast.success("Vidéo importée. Mettez-la à disposition pour générer les liens des sponsors.");
+        router.push(`/videos/${result.data.videoId}`);
+        router.refresh();
+      } else {
+        // Contributeur vidéo : pas d'accès à la fiche ; le formulaire est réinitialisé pour un nouvel import.
+        toast.success("Vidéo importée. Un gestionnaire des médias la mettra à disposition des sponsors.");
+        setFile(null);
+        setTitle("");
+        setMessage("");
+        setChild(null);
+        setProgress(null);
+        if (input.current) input.current.value = "";
+      }
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "L'import a échoué.");
       setProgress(null);
@@ -93,7 +103,7 @@ export function VideoUploadForm({ years }: { years: Array<{ id: string; label: s
         <FormSection title="Enfant et année" description="Les sponsors de l'enfant pour cette année recevront chacun un lien privé.">
           <Field className="sm:col-span-2" data-invalid={Boolean(errors.childId) || undefined}>
             <FieldLabel htmlFor="video-child">Enfant</FieldLabel>
-            <EntityPicker id="video-child" value={child} onChange={setChild} search={searchChildrenAction} placeholder="Nom, code…" disabled={busy} invalid={Boolean(errors.childId)} />
+            <EntityPicker id="video-child" value={child} onChange={setChild} search={searchChildrenForVideoAction} placeholder="Nom, code…" disabled={busy} invalid={Boolean(errors.childId)} />
             {errors.childId ? <FieldError>{errors.childId}</FieldError> : null}
           </Field>
           <Field>
@@ -151,9 +161,11 @@ export function VideoUploadForm({ years }: { years: Array<{ id: string; label: s
         </FormSection>
       </div>
       <div className="flex justify-end gap-2">
-        <Link href="/videos" className={buttonVariants({ variant: "outline" })}>
-          Annuler
-        </Link>
+        {canManage ? (
+          <Link href="/videos" className={buttonVariants({ variant: "outline" })}>
+            Annuler
+          </Link>
+        ) : null}
         <Button type="submit" disabled={busy}>
           {busy ? <Loader2 className="animate-spin" aria-hidden /> : <UploadCloud aria-hidden />}
           Importer la vidéo

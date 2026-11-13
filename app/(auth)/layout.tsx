@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       {/* Fond discret : grille et halo bleu, purement décoratifs. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] mask-[radial-gradient(ellipse_60%_50%_at_50%_40%,#000_40%,transparent_100%)] bg-size-[32px_32px] opacity-60"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] mask-[radial-gradient(ellipse_60%_50%_at_50%_40%,#000_40%,transparent_100%)] bg-size-[32px_32px] opacity-60 dark:opacity-10"
       />
       <div aria-hidden className="pointer-events-none absolute top-[-10%] left-1/2 h-80 w-[36rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 

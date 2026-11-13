@@ -37,6 +37,13 @@ describe("matrice des permissions", () => {
     assert.deepEqual(allowed("videos:write"), ["SUPER_ADMIN", "ADMIN", "MEDIA_MANAGER"]);
   });
 
+  it("limite le contributeur vidéo à l'import, sans accès aux fiches, montants ou liens", () => {
+    assert.deepEqual(allowed("videos:upload"), ["SUPER_ADMIN", "ADMIN", "MEDIA_MANAGER", "VIDEO_UPLOADER"]);
+    const granted = PERMISSIONS.filter((p) => hasPermission("VIDEO_UPLOADER", p));
+    assert.deepEqual(granted, ["dashboard:read", "videos:upload"]);
+    assert.equal((ASSIGNABLE_ROLES as readonly string[]).includes("VIDEO_UPLOADER"), true);
+  });
+
   it("limite la modification des fiches enfants", () => {
     assert.deepEqual(allowed("children:write"), ["SUPER_ADMIN", "ADMIN", "CHILD_MANAGER"]);
     assert.equal(hasPermission("FINANCE_MANAGER", "children:read"), true);

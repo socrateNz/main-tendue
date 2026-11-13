@@ -33,6 +33,7 @@ const ROLE_TONES: Record<Role, StatusTone> = {
   FINANCE_MANAGER: "success",
   CHILD_MANAGER: "warning",
   MEDIA_MANAGER: "neutral",
+  VIDEO_UPLOADER: "neutral",
 };
 
 function lastLogin(value: string | null): string {

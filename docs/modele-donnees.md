@@ -302,22 +302,23 @@ lastAttemptAt, lastError, deletedAt }`.
 
 ## 11. Rôles et permissions (résumé)
 
-| Action | SUPER_ADMIN | ADMIN | FINANCE_MANAGER | CHILD_MANAGER | MEDIA_MANAGER |
-|---|:-:|:-:|:-:|:-:|:-:|
-| Utilisateurs (hors compte SUPER_ADMIN, masqué) | ✔ | ✔ | | | |
-| Solde initial de caisse (création, correction) | ✔ | ✔ | | | |
-| Années : créer / activer / clôturer | ✔ | ✔ | | | |
-| Année : réouverture | ✔ | ✔ | | | |
-| Enfants, établissements, scolarité | ✔ | ✔ | lecture | ✔ | lecture |
-| Sponsors, parrainages | ✔ | ✔ | ✔ | lecture | lecture |
-| Engagements | ✔ | ✔ | ✔ | lecture | |
-| Versements, dons, avances, affectations d'avances | ✔ | ✔ | ✔ | | |
-| Mouvements financiers : annuler | ✔ | ✔ | ✔ | | |
-| Dépenses : saisir | ✔ | ✔ | ✔ | | |
-| Catégories de dépenses | ✔ | ✔ | ✔ | | |
-| Vidéos : importer, liens, révoquer | ✔ | ✔ | | | ✔ |
-| Rapports financiers | ✔ | ✔ | ✔ | | |
-| Journal d'audit | ✔ | ✔ | | | |
+| Action | SUPER_ADMIN | ADMIN | FINANCE_MANAGER | CHILD_MANAGER | MEDIA_MANAGER | VIDEO_UPLOADER |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| Utilisateurs (hors compte SUPER_ADMIN, masqué) | ✔ | ✔ | | | | |
+| Solde initial de caisse (création, correction) | ✔ | ✔ | | | | |
+| Années : créer / activer / clôturer | ✔ | ✔ | | | | |
+| Année : réouverture | ✔ | ✔ | | | | |
+| Enfants, établissements, scolarité | ✔ | ✔ | lecture | ✔ | lecture | |
+| Sponsors, parrainages | ✔ | ✔ | ✔ | lecture | lecture | |
+| Engagements | ✔ | ✔ | ✔ | lecture | | |
+| Versements, dons, avances, affectations d'avances | ✔ | ✔ | ✔ | | | |
+| Mouvements financiers : annuler | ✔ | ✔ | ✔ | | | |
+| Dépenses : saisir | ✔ | ✔ | ✔ | | | |
+| Catégories de dépenses | ✔ | ✔ | ✔ | | | |
+| Vidéos : importer | ✔ | ✔ | | | ✔ | ✔ |
+| Vidéos : mettre à disposition, liens, révoquer | ✔ | ✔ | | | ✔ | |
+| Rapports financiers | ✔ | ✔ | ✔ | | | |
+| Journal d'audit | ✔ | ✔ | | | | |
 
 La matrice fait foi dans `lib/auth/permissions.ts` ; chaque service vérifie la permission côté serveur.
 

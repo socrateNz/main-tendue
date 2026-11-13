@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTransition } from "react";
 
 import { logoutAction } from "@/features/auth/actions";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -49,6 +50,11 @@ export function NavUser({ user }: { user: NavUserInfo }) {
                 <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <div className="px-1.5 py-1">
+              <p className="mb-1 px-0.5 text-xs text-muted-foreground">Thème</p>
+              <ThemeToggle />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/mon-compte" />}>
               <UserRound aria-hidden />
